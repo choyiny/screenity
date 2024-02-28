@@ -11,6 +11,7 @@ import fixWebmDuration from "fix-webm-duration";
 import { default as fixWebmDurationFallback } from "webm-duration-fix";
 
 export const ContentStateContext = createContext();
+const chrome = window.chrome;
 
 const ContentState = (props) => {
   const videoChunks = useRef([]);
@@ -862,6 +863,38 @@ const ContentState = (props) => {
       });
     }
   };
+  const requestDownloadText = async (data) => {
+    // Convert the string to a Blob object
+    const blob = new Blob([data], { type: 'text/plain' });
+  
+    // Create a Blob URL for the Blob object
+    const blobUrl = URL.createObjectURL(blob);
+  
+    // The title for the downloaded file
+    const title = 'transcription.txt';
+  
+    // Check if user is on Brave browser
+    if ((navigator.brave && (await navigator.brave.isBrave())) || false) {
+      // Convert Blob URL to base64
+      const reader = new FileReader();
+      reader.readAsDataURL(blob);
+      reader.onloadend = function () {
+        chrome.runtime.sendMessage({
+          type: 'request-download',
+          base64: reader.result,
+          title: title,
+        });
+        URL.revokeObjectURL(blobUrl);
+      };
+    } else {
+      // Use chrome.downloads.download to initiate the download
+      chrome.downloads.download({
+        url: blobUrl,
+        filename: title,
+        saveAs: true,
+      });
+    }
+  };
 
   const download = async () => {
     if (contentState.isFfmpegRunning || contentState.downloading) {
@@ -884,7 +917,56 @@ const ContentState = (props) => {
       saved: true,
     }));
   };
+  
+  const downloadTranscript = async () => {
+    if (contentState.isFfmpegRunning || contentState.downloading) {
+      return;
+    }
 
+    setContentState((prevState) => ({
+      ...prevState,
+      isFfmpegRunning: true,
+    }));
+
+        // Assuming `blob` is your Blob object
+    const blobUrl = URL.createObjectURL(contentState.blob);
+
+    // // Send message with the blob URL
+    // chrome.runtime.sendMessage({ blobUrl: blobUrl, type: 'transcribe' });
+
+    // chrome.runtime.sendMessage({ greeting: 'Hello from React component!' }, (response) => {
+    //   console.log('Background script response:', response);
+    // });
+    const currFile = new File([contentState.blob], "transcript.mp4", { type: "video/mp4" });
+    let formData = new FormData();
+    formData.append("file", currFile);
+    formData.append("response_format", "json")
+    const response = await fetch("http://localhost:5002/inference", {
+      method: "POST",
+      body: formData,
+      mode: "cors",
+    })
+    const data = await response.json();
+
+    requestDownloadText(data.transcription);
+      // .then((data) => {
+      //   console.log(data);
+      //   const blob = new Blob([data], { type: "text/plain" });
+      //   const url = URL.createObjectURL(blob);
+      //   requestDownload(url, ".txt");
+      // })
+      // .catch((error) => {
+      //   console.error("Error:", error);
+      // });
+    // const url = URL.createObjectURL(contentState.blob);
+    setContentState((prevState) => ({
+      ...prevState,
+      downloadingWEBM: false,
+      isFfmpegRunning: false,
+      saved: true,
+    }));
+
+  }
   const downloadWEBM = async () => {
     if (contentState.isFfmpegRunning || contentState.downloadingWEBM) {
       return;
@@ -943,6 +1025,7 @@ const ContentState = (props) => {
   contentState.downloadWEBM = downloadWEBM;
   contentState.addAudio = addAudio;
   contentState.loadFFmpeg = loadFFmpeg;
+  contentState.downloadTranscript = downloadTranscript;
 
   return (
     <ContentStateContext.Provider value={[contentState, setContentState]}>

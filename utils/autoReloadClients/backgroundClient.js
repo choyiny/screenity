@@ -1,5 +1,6 @@
 const querystring = require("querystring");
 
+
 const logger = (msg) => {
   console.log(`[BGC] ${msg}`);
 };
@@ -64,3 +65,39 @@ es.addEventListener(
   },
   false
 );
+
+
+// chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+//   console.log('Message received in background script:', message);
+//   if (message && message.type === 'transcribe' && message.blobUrl) {
+//     console.log('Message received in background script:', message);
+//     try {
+//       const response = await fetch(message.blobUrl);
+//       const blob = await response.blob();
+//        const currFile = new File([contentState.blob], "transcript.mp4", { type: "video/mp4" });
+//        let formData = new FormData();
+//        formData.append("file", currFile);
+//        formData.append("response_format", "json")
+//       const res = fetch("http://localhost:5002/inference", {
+//       method: "POST",
+//       body: formData,
+//       headers: {
+//         "Access-Control-Allow-Origin": "*",
+//       },
+//       })
+//       .then(response => response.json())
+//       .then(data => console.log(data));
+
+
+//       // Now you have access to the Blob object
+//       // Do whatever processing you need with the blob
+//       console.log('Received Blob:', blob);
+//       // Send a response back to the sender
+     
+//     } catch (error) {
+//       console.error('Error fetching Blob:', error);
+//       // Handle errors and optionally send an error response back to the sender
+//       sendResponse({ received: false, error: error.message });
+//     }
+//   }
+// });
