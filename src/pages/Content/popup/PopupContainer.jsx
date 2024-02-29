@@ -365,7 +365,7 @@ const PopupContainer = (props) => {
                     </div>
                     {chrome.i18n.getMessage("recordTab")}
                   </Tabs.Trigger>
-                  <Tabs.Trigger
+                  {/* <Tabs.Trigger
                     className="TabsTrigger tl"
                     value="dashboard"
                     ref={videoTabRef}
@@ -381,7 +381,7 @@ const PopupContainer = (props) => {
                       />
                     </div>
                     {chrome.i18n.getMessage("videosTab")}
-                  </Tabs.Trigger>
+                  </Tabs.Trigger> */}
                 </Tabs.List>
                 <Tabs.Content className="TabsContent tl" value="record">
                   <RecordingTab shadowRef={props.shadowRef} />

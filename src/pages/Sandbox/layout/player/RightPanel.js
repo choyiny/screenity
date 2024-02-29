@@ -513,7 +513,7 @@ const RightPanel = () => {
                   </div>
                   <div className={styles.buttonMiddle}>
                     <div className={styles.buttonTitle}>{contentState.downloadingWEBM ? chrome.i18n.getMessage('downloadingLabel') : 'Download transcription' }</div>
-                    <div className={styles.buttonDescription}>{!contentState.isFfmpegRunning ? 'Export transcription of audio as text (May take a few minutes..)' : chrome.i18n.getMessage('preparingLabel')}</div>
+                    <div className={styles.buttonDescription}>{!contentState.isFfmpegRunning ? 'Export transcription of audio as text (May take a few minutes..)' : 'Preparing transcript please wait...'}</div>
                   </div>
                   <div className={styles.buttonRight}>
                     <ReactSVG src={URL + 'editor/icons/right-arrow.svg'} />

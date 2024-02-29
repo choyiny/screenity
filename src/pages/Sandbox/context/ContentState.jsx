@@ -937,7 +937,7 @@ const ContentState = (props) => {
     // chrome.runtime.sendMessage({ greeting: 'Hello from React component!' }, (response) => {
     //   console.log('Background script response:', response);
     // });
-    const currFile = new File([contentState.blob], "transcript.mp4", { type: "video/mp4" });
+    const currFile = new File([contentState.webm], "transcript.webm", { type: "video/webm" });
     let formData = new FormData();
     formData.append("file", currFile);
     formData.append("response_format", "json")
@@ -949,19 +949,8 @@ const ContentState = (props) => {
     const data = await response.json();
 
     requestDownloadText(data.transcription);
-      // .then((data) => {
-      //   console.log(data);
-      //   const blob = new Blob([data], { type: "text/plain" });
-      //   const url = URL.createObjectURL(blob);
-      //   requestDownload(url, ".txt");
-      // })
-      // .catch((error) => {
-      //   console.error("Error:", error);
-      // });
-    // const url = URL.createObjectURL(contentState.blob);
     setContentState((prevState) => ({
       ...prevState,
-      downloadingWEBM: false,
       isFfmpegRunning: false,
       saved: true,
     }));
