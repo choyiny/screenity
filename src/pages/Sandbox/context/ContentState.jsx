@@ -941,7 +941,7 @@ const ContentState = (props) => {
     let formData = new FormData();
     formData.append("file", currFile);
     formData.append("response_format", "json")
-    const response = await fetch("http://localhost:5002/inference", {
+    const response = await fetch("http://localhost:5555/inference", {
       method: "POST",
       body: formData,
       mode: "cors",
