@@ -928,20 +928,11 @@ const ContentState = (props) => {
       isFfmpegRunning: true,
     }));
 
-        // Assuming `blob` is your Blob object
-    const blobUrl = URL.createObjectURL(contentState.blob);
-
-    // // Send message with the blob URL
-    // chrome.runtime.sendMessage({ blobUrl: blobUrl, type: 'transcribe' });
-
-    // chrome.runtime.sendMessage({ greeting: 'Hello from React component!' }, (response) => {
-    //   console.log('Background script response:', response);
-    // });
     const currFile = new File([contentState.webm], "transcript.webm", { type: "video/webm" });
     let formData = new FormData();
     formData.append("file", currFile);
     formData.append("response_format", "json")
-    const response = await fetch("http://localhost:5555/inference", {
+    const response = await fetch("http://localhost:5555/speech-to-text", {
       method: "POST",
       body: formData,
       mode: "cors",
