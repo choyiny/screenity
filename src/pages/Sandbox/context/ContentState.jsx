@@ -939,7 +939,7 @@ const ContentState = (props) => {
     })
     const data = await response.json();
 
-    requestDownloadText(data.transcription);
+    requestDownloadText(data.diarized_transcription);
     setContentState((prevState) => ({
       ...prevState,
       isFfmpegRunning: false,
