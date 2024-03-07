@@ -870,27 +870,55 @@ const ContentState = (props) => {
   };
 
   const downloadTranscript = async () => {
-    if (contentState.isFfmpegRunning || contentState.downloading) {
-      return;
+    try {
+      if (contentState.isFfmpegRunning || contentState.downloading) {
+        return;
+      }
+
+      setContentState((prevState) => ({
+        ...prevState,
+        isFfmpegRunning: true,
+        downloadingWEBM: true,
+      }));
+
+      const url = URL.createObjectURL(contentState.webm);
+      requestDownload(url, '.webm');
+      setContentState((prevState) => ({
+        ...prevState,
+        downloadingWEBM: false,
+        isFfmpegRunning: true,
+      }));
+
+      const currFile = new File([contentState.webm], 'transcript.webm', { type: 'video/webm' });
+      let formData = new FormData();
+      formData.append('file', currFile);
+      formData.append('response_format', 'json');
+      const response = await fetch('http://localhost:5555/speech-to-text', {
+        method: 'POST',
+        body: formData,
+        mode: 'cors',
+      });
+      const data = await response.json();
+
+      requestDownloadText(data.diarized_transcription);
+      setContentState((prevState) => ({
+        ...prevState,
+        isFfmpegRunning: false,
+        saved: true,
+      }));
+    } catch (e) {
+      console.log(e);
+      setContentState((prevState) => ({
+        ...prevState,
+        isFfmpegRunning: false,
+        saved: true,
+      }));
     }
+  };
 
-    setContentState((prevState) => ({
-      ...prevState,
-      isFfmpegRunning: true,
-      downloadingWEBM: true,
-    }));
-
-    const url = URL.createObjectURL(contentState.webm);
-    requestDownload(url, '.webm');
-    setContentState((prevState) => ({
-      ...prevState,
-      downloadingWEBM: false,
-      isFfmpegRunning: true,
-    }));
-
-    const currFile = new File([contentState.webm], 'transcript.webm', { type: 'video/webm' });
+  const downloadTranscriptFile = async (file) => {
     let formData = new FormData();
-    formData.append('file', currFile);
+    formData.append('file', file);
     formData.append('response_format', 'json');
     const response = await fetch('http://localhost:5555/speech-to-text', {
       method: 'POST',
@@ -898,27 +926,7 @@ const ContentState = (props) => {
       mode: 'cors',
     });
     const data = await response.json();
-
     requestDownloadText(data.diarized_transcription);
-    setContentState((prevState) => ({
-      ...prevState,
-      isFfmpegRunning: false,
-      saved: true,
-    }));
-  };
-
-  const downloadTranscriptFile = async (file) => {
-
-        let formData = new FormData();
-        formData.append('file', file);
-        formData.append('response_format', 'json');
-        const response = await fetch('http://localhost:5555/speech-to-text', {
-          method: 'POST',
-          body: formData,
-          mode: 'cors',
-        });
-        const data = await response.json();
-        requestDownloadText(data.diarized_transcription);
   };
   const downloadWEBM = async () => {
     if (contentState.isFfmpegRunning || contentState.downloadingWEBM) {
