@@ -49,6 +49,16 @@
   initial-value: 0%;
 }
 
+.upload-button {
+	margin-top: $spacing-03;
+	animation: 0;
+	animation: background-size 6s ease-in-out infinite;
+	animation-play-state: paused;
+	position: relative;
+	z-index: 2;
+	filter: drop-shadow(0px 4px 20px rgba(255, 105, 180, 0.5));
+	background: radial-gradient(127.41% 127.78% at 35.44% 0%, #FF758C 23.13%, #FF4D6F 46.35%, #FF2954 74.48%, #FF2954 100%);
+}
 .recording-button {
 	margin-top: $spacing-03;
 	filter: $gradient-shadow-primary;
@@ -76,10 +86,10 @@
 	}
 }
 
-.recording-button:hover {
+.recording-button:hover, .upload-button:hover{
 	animation-play-state: running!important;
 }
-.recording-button:before {
+.recording-button:before, .upload-button:before {
 	content: "";
 	position: absolute;
 	display: block;
@@ -91,7 +101,7 @@
 	border-radius: $container-border-radius;
 	transition: all .25s ease-in-out;
 }
-.recording-button:hover:before {
+.recording-button:hover:before, .upload-button:hover:before {
 	box-shadow: 0px 0px 0px 4px rgba(52, 138, 247, 0.25);
 }
 @keyframes pulse-animation {

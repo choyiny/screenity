@@ -2,6 +2,7 @@ import React, { useEffect, useState, useContext } from "react";
 import * as Tabs from "@radix-ui/react-tabs";
 
 import RecordingType from "./RecordingType";
+import Transcribe from "./Transcribe";
 import {
   ScreenTabOn,
   ScreenTabOff,
@@ -90,10 +91,9 @@ const RecordingTab = (props) => {
           </Tabs.Trigger>
           <Tabs.Trigger
             className="TabsTrigger"
-            value="mockup"
+            value="transcribe"
             tabIndex={0}
-            disabled
-            style={{ pointerEvents: "none", opacity: 0.5 }}
+            // style={{ pointerEvents: "none", opacity: 0.5 }}
           >
             <div className="TabsTriggerLabel">
               <div className="TabsTriggerIcon">
@@ -105,7 +105,7 @@ const RecordingTab = (props) => {
                   }
                 />
               </div>
-              <span>{chrome.i18n.getMessage("MockupType")}</span>
+              <span>Transcribe Audio/Video</span>
             </div>
           </Tabs.Trigger>
         </Tabs.List>
@@ -118,8 +118,8 @@ const RecordingTab = (props) => {
         <Tabs.Content className="TabsContent" value="camera">
           <RecordingType shadowRef={props.shadowRef} />
         </Tabs.Content>
-        <Tabs.Content className="TabsContent" value="mockup">
-          WIP
+        <Tabs.Content className="TabsContent" value="transcribe">
+          <Transcribe shadowRef={props.shadowRef} />
         </Tabs.Content>
       </Tabs.Root>
     </div>

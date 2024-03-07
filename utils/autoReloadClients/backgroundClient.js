@@ -11,6 +11,28 @@ logger("connecting to SSE service...");
 const port = querystring.parse(__resourceQuery.slice(1)).port;
 const es = new EventSource(`http://localhost:${port}/__server_sent_events__`);
 
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if(message.type === "open-transcribe"){
+    let editor_url = "editor.html";
+    chrome.tabs.create({ url: editor_url, active: true}, (tab) => {
+      chrome.tabs.onUpdated.addListener(function _(
+        tabId,
+        changeInfo,
+        updatedTab
+      ) {
+        // Check if recorder tab has finished loading
+        if (tabId === tab.id && changeInfo.status === "complete") {
+          chrome.tabs.sendMessage(tab.id, {
+            type: "init-transcribe",
+            tabId: tab.id,
+          });
+          chrome.tabs.onUpdated.removeListener(_);
+        }
+      });
+    })
+  
+}})
+
 es.addEventListener(
   "open",
   () => {

@@ -1,22 +1,32 @@
-import "./styles/edit/_VideoPlayer.scss";
-import "./styles/global/_app.scss";
+import './styles/edit/_VideoPlayer.scss';
+import './styles/global/_app.scss';
 
-import React, { useState, useEffect, useRef, useContext } from "react";
+import React, { useState, useEffect, useRef, useContext } from 'react';
 // Layout
-import Editor from "./layout/editor/Editor";
-import Player from "./layout/player/Player";
-import Modal from "./components/global/Modal";
+import Editor from './layout/editor/Editor';
+import Player from './layout/player/Player';
+import Modal from './components/global/Modal';
 
-import HelpButton from "./components/player/HelpButton";
+import HelpButton from './components/player/HelpButton';
 
 // Context
-import { ContentStateContext } from "./context/ContentState"; // Import the ContentState context
+import { ContentStateContext } from './context/ContentState'; // Import the ContentState context
 
 const Sandbox = () => {
   const [contentState, setContentState] = useContext(ContentStateContext); // Access the ContentState context
   const parentRef = useRef(null);
-  const progress = useRef("");
+  const progress = useRef('');
+  const [transcribe, setTranscribe] = useState(false);
+  const [processing, setProcessing] = useState(false);
 
+  chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+    console.log('Received message:', message);
+    // Check if the message contains the action "transcribe"
+    if (message.type === 'init-transcribe') {
+      // Log that the tab needs to transcribe
+      setTranscribe(true);
+    }
+  });
   // Check when going offline (listener)
   // useEffect(() => {
   //   window.addEventListener("offline", () => {
@@ -60,31 +70,31 @@ const Sandbox = () => {
     if (!parentRef.current) return;
 
     // Check if on mac
-    const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
     if (isMac) return;
 
     const parentDiv = parentRef.current;
 
-    const elements = parentDiv.querySelectorAll("*");
+    const elements = parentDiv.querySelectorAll('*');
     elements.forEach((element) => {
-      element.classList.add("screenity-scrollbar");
+      element.classList.add('screenity-scrollbar');
     });
 
     const observer = new MutationObserver((mutationsList) => {
       for (const mutation of mutationsList) {
-        if (mutation.type === "childList") {
+        if (mutation.type === 'childList') {
           const addedNodes = Array.from(mutation.addedNodes);
           const removedNodes = Array.from(mutation.removedNodes);
 
           addedNodes.forEach((node) => {
             if (node.nodeType === Node.ELEMENT_NODE) {
-              node.classList.add("screenity-scrollbar");
+              node.classList.add('screenity-scrollbar');
             }
           });
 
           removedNodes.forEach((node) => {
             if (node.nodeType === Node.ELEMENT_NODE) {
-              node.classList.remove("screenity-scrollbar");
+              node.classList.remove('screenity-scrollbar');
             }
           });
         }
@@ -100,73 +110,111 @@ const Sandbox = () => {
 
   useEffect(() => {
     if (contentState.chunkCount > 0) {
-      progress.current = `(${Math.round(
-        (contentState.chunkIndex / contentState.chunkCount) * 100
-      )}%)`;
+      progress.current = `(${Math.round((contentState.chunkIndex / contentState.chunkCount) * 100)}%)`;
     }
   }, [contentState.chunkIndex, contentState.chunkCount]);
 
+  const [file, setFile] = useState(null);
+  const fileInputRef = useRef();
+  const handleChange = (event) => {
+    // do something with event data
+    const file = event.target.files[0];
+    setFile(file);
+  };
+  const downloadTranscript = async() => {
+    try{
+      console.log('downloading transcript')
+    setProcessing(true);
+    await contentState.downloadTranscriptFile(file)
+    setProcessing(false);
+    }catch(e){
+      console.log(e);
+      setProcessing(false);
+    }
+   
+  }
+
   return (
-    <div ref={parentRef}>
-      <Modal />
-      <video></video>
-      {/* Render the WaveformGenerator component and pass the ffmpeg instance as a prop */}
-      {contentState.ffmpeg &&
-        contentState.ready &&
-        contentState.mode === "edit" && <Editor />}
-      {contentState.mode != "edit" && contentState.ready && <Player />}
-      {!contentState.ready && (
-        <div className="wrap">
-          <img className="logo" src="/assets/logo-text.svg" />
-          <div className="middle-area">
-            <img src="/assets/record-tab-active.svg" />
-            <div className="title">
-              {chrome.i18n.getMessage("sandboxProgressTitle") +
-                " " +
-                progress.current}
+    <>
+      <div ref={parentRef}>
+        {transcribe ? (
+          <div>
+            <div className="wrap">
+              <img className="logo" src="/assets/logo-text.svg" />
+              <div className="middle-area">
+                <button className="main-button upload-button" onClick={() => fileInputRef.current.click()}>
+                  Custom File Input Button
+                </button>
+                <input onChange={handleChange} multiple={false} ref={fileInputRef} type="file" accept="audio/*, video/*" style={{ visibility: 'hidden' }} />
+                <div>
+                  <label className="Label">File to Transcribe</label>
+                  <p>{file ? file.name : 'No file selected'}</p>
+                </div>
+
+                <button style={{ color: 'white' }} disabled={!file || processing} className="main-button recording-button" onClick={() => downloadTranscript()}>
+                  Transcribe
+                </button>
+              </div>
             </div>
-            <div className="subtitle">
-              {chrome.i18n.getMessage("sandboxProgressDescription")}
-            </div>
-            {typeof contentState.openModal === "function" && (
-              <div
-                className="button-stop"
-                onClick={() => {
-                  contentState.openModal(
-                    chrome.i18n.getMessage("havingIssuesModalTitle"),
-                    chrome.i18n.getMessage("havingIssuesModalDescription"),
-                    chrome.i18n.getMessage("havingIssuesModalButton"),
-                    chrome.i18n.getMessage("havingIssuesModalButton2"),
-                    () => {
-                      chrome.runtime.sendMessage(
-                        {
-                          type: "check-restore",
-                        },
-                        (response) => {
-                          if (response.restore) {
-                            chrome.runtime.sendMessage({
-                              type: "indexed-db-download",
-                            });
-                          } else {
-                            alert(chrome.i18n.getMessage("noRecordingFound"));
+            <div className="setupBackgroundSVG"></div>
+          </div>
+        ) : (
+          <>
+            {/* Render the rest of your components */}
+            <Modal />
+            <video></video>
+            {/* Render the WaveformGenerator component and pass the ffmpeg instance as a prop */}
+            {contentState.ffmpeg && contentState.ready && contentState.mode === 'edit' && <Editor />}
+            {contentState.mode != 'edit' && contentState.ready && <Player />}
+            {!contentState.ready && (
+              <div className="wrap">
+                <img className="logo" src="/assets/logo-text.svg" />
+                <div className="middle-area">
+                  <img src="/assets/record-tab-active.svg" />
+                  <div className="title">{chrome.i18n.getMessage('sandboxProgressTitle') + ' ' + progress.current}</div>
+                  <div className="subtitle">{chrome.i18n.getMessage('sandboxProgressDescription')}</div>
+                  {typeof contentState.openModal === 'function' && (
+                    <div
+                      className="button-stop"
+                      onClick={() => {
+                        contentState.openModal(
+                          chrome.i18n.getMessage('havingIssuesModalTitle'),
+                          chrome.i18n.getMessage('havingIssuesModalDescription'),
+                          chrome.i18n.getMessage('havingIssuesModalButton'),
+                          chrome.i18n.getMessage('havingIssuesModalButton2'),
+                          () => {
+                            chrome.runtime.sendMessage(
+                              {
+                                type: 'check-restore',
+                              },
+                              (response) => {
+                                if (response.restore) {
+                                  chrome.runtime.sendMessage({
+                                    type: 'indexed-db-download',
+                                  });
+                                } else {
+                                  alert(chrome.i18n.getMessage('noRecordingFound'));
+                                }
+                              }
+                            );
+                          },
+                          () => {
+                            chrome.runtime.sendMessage({ type: 'report-bug' });
                           }
-                        }
-                      );
-                    },
-                    () => {
-                      chrome.runtime.sendMessage({ type: "report-bug" });
-                    }
-                  );
-                }}
-              >
-                {chrome.i18n.getMessage("havingIssuesButton")}
+                        );
+                      }}
+                    >
+                      {chrome.i18n.getMessage('havingIssuesButton')}
+                    </div>
+                  )}
+                </div>
+                <HelpButton />
+                <div className="setupBackgroundSVG"></div>
               </div>
             )}
-          </div>
-          <HelpButton />
-          <div className="setupBackgroundSVG"></div>
-        </div>
-      )}
+          </>
+        )}
+      </div>
       <style>
         {`
 				
@@ -295,9 +343,144 @@ const Sandbox = () => {
 	flex-direction: row!important;
 	gap: 6px!important;
 }
+.recording-button {
+  margin-top: 8px;
+  filter: drop-shadow(0px 4px 20px rgba(86, 123, 218, 0.5));
+  background: radial-gradient(127.41% 127.78% at 35.44% 0%, #2BAEF8 23.13%, #3582F6 46.35%, #486DEF 74.48%, #7B9AEA 100%);
+  animation: 0;
+  animation: background-size 6s ease-in-out infinite;
+  animation-play-state: paused;
+  position: relative;
+  z-index: 2;
+}
+.upload-button {
+  margin-top: 8px;
+	animation: 0;
+	animation: background-size 6s ease-in-out infinite;
+	animation-play-state: paused;
+	position: relative;
+	z-index: 2;
+	filter: drop-shadow(0px 4px 20px rgba(255, 105, 180, 0.5));
+	background: radial-gradient(127.41% 127.78% at 35.44% 0%, #FF758C 23.13%, #FF4D6F 46.35%, #FF2954 74.48%, #FF2954 100%);
+  color: white;
+}
+
+@keyframes background-size {
+  /* Animate scale and position in and out looping */
+  0% {
+    background-size: 100% 100%;
+    background-position: 0% 0%;
+  }
+  50% {
+    background-size: 150% 150%;
+    background-position: 100% 0%;
+  }
+  100% {
+    background-size: 100% 100%;
+    background-position: 0% 0%;
+  }
+}
+.recording-button:hover, .upload-button:hover {
+  animation-play-state: running !important;
+}
+
+.recording-button:before , .upload-button:before{
+  content: "";
+  position: absolute;
+  display: block;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border-radius: 30px;
+  transition: all 0.25s ease-in-out;
+}
+
+.recording-button:hover:before, .upload-button:hover:before {
+  box-shadow: 0px 0px 0px 4px rgba(52, 138, 247, 0.25);
+}
+.main-button {
+  width: 50%;
+  height: 45px;
+  border-radius: 30px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  box-sizing: border-box;
+}
+.main-button:hover {
+  cursor: pointer;
+}
+.main-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.Label {
+  color: #6E7684;
+  display: flex;
+}
 					
 					`}
       </style>
+    </>
+  );
+  return (
+    <div ref={parentRef}>
+      {/* if transcribe then display div else display another div*/}
+      <Modal />
+      <video></video>
+      {/* Render the WaveformGenerator component and pass the ffmpeg instance as a prop */}
+      {contentState.ffmpeg && contentState.ready && contentState.mode === 'edit' && <Editor />}
+      {contentState.mode != 'edit' && contentState.ready && <Player />}
+      {!contentState.ready && (
+        <div className="wrap">
+          <img className="logo" src="/assets/logo-text.svg" />
+          <div className="middle-area">
+            <img src="/assets/record-tab-active.svg" />
+            <div className="title">{chrome.i18n.getMessage('sandboxProgressTitle') + ' ' + progress.current}</div>
+            <div className="subtitle">{chrome.i18n.getMessage('sandboxProgressDescription')}</div>
+            {typeof contentState.openModal === 'function' && (
+              <div
+                className="button-stop"
+                onClick={() => {
+                  contentState.openModal(
+                    chrome.i18n.getMessage('havingIssuesModalTitle'),
+                    chrome.i18n.getMessage('havingIssuesModalDescription'),
+                    chrome.i18n.getMessage('havingIssuesModalButton'),
+                    chrome.i18n.getMessage('havingIssuesModalButton2'),
+                    () => {
+                      chrome.runtime.sendMessage(
+                        {
+                          type: 'check-restore',
+                        },
+                        (response) => {
+                          if (response.restore) {
+                            chrome.runtime.sendMessage({
+                              type: 'indexed-db-download',
+                            });
+                          } else {
+                            alert(chrome.i18n.getMessage('noRecordingFound'));
+                          }
+                        }
+                      );
+                    },
+                    () => {
+                      chrome.runtime.sendMessage({ type: 'report-bug' });
+                    }
+                  );
+                }}
+              >
+                {chrome.i18n.getMessage('havingIssuesButton')}
+              </div>
+            )}
+          </div>
+          <HelpButton />
+          <div className="setupBackgroundSVG"></div>
+        </div>
+      )}
     </div>
   );
 };
