@@ -560,12 +560,12 @@
     "description": "Save to Google Drive button"
   },
   "saveDriveButtonDescription": {
-    "message": "Save the current version to Google Drive",
-    "description": "Save to Google Drive label"
+    "message": "Save the current version to Verto Artoo",
+    "description": "Save to Artoo label"
   },
   "signInDriveLabel": {
-    "message": "Sign in and save to Drive",
-    "description": "Sign in to Google Drive label"
+    "message": "Save to Verto",
+    "description": "Save to Verto label"
   },
   "sandboxExportTitle": {
     "message": "Export",

@@ -38,32 +38,19 @@ const RightPanel = () => {
       saveDrive: true,
     }));
 
-    if (contentState.noffmpeg || !contentState.mp4ready || !contentState.blob) {
-      chrome.runtime
-        .sendMessage({
-          type: 'save-to-drive-fallback',
-          title: contentState.title,
-        })
-        .then((response) => {
-          if (response.status === 'ew') {
-            // Cancel saving to drive
-            setContentState((prevContentState) => ({
-              ...prevContentState,
-              saveDrive: false,
-            }));
-          }
-        });
-    } else {
-      // Blob to base64
-      const reader = new FileReader();
-      reader.onload = () => {
-        const dataUrl = reader.result;
-        const base64 = dataUrl.split(',')[1];
-
+    chrome.storage.sync.get('uploadToken', function (data) {
+      let token = data.uploadToken;
+      //remove after
+      token = prompt('Please input upload token for Artoo');
+      chrome.storage.sync.set({ uploadToken: token });
+      if (!token) {
+        token = prompt('Please input upload token for Artoo');
+        chrome.storage.sync.set({ uploadToken: token });
+      }
+      if (contentState.noffmpeg || !contentState.mp4ready || !contentState.blob) {
         chrome.runtime
           .sendMessage({
-            type: 'save-to-drive',
-            base64: base64,
+            type: 'save-to-drive-fallback',
             title: contentState.title,
           })
           .then((response) => {
@@ -75,13 +62,38 @@ const RightPanel = () => {
               }));
             }
           });
-      };
-      if (!contentState.noffmpeg && contentState.mp4ready && contentState.blob) {
-        reader.readAsDataURL(contentState.blob);
       } else {
-        reader.readAsDataURL(contentState.webm);
+        // Blob to base64
+        const reader = new FileReader();
+        reader.onload = () => {
+          const dataUrl = reader.result;
+          const base64 = dataUrl.split(',')[1];
+  
+          chrome.runtime
+            .sendMessage({
+              type: 'save-to-drive',
+              base64: base64,
+              title: contentState.title,
+            })
+            .then((response) => {
+              if (response.status === 'ew') {
+                // Cancel saving to drive
+                setContentState((prevContentState) => ({
+                  ...prevContentState,
+                  saveDrive: false,
+                }));
+              }else{
+                console.log('response', response);
+              }
+            });
+        };
+        if (!contentState.noffmpeg && contentState.mp4ready && contentState.blob) {
+          reader.readAsDataURL(contentState.blob);
+        } else {
+          reader.readAsDataURL(contentState.webm);
+        }
       }
-    }
+    });
   };
 
   const signOutDrive = () => {
@@ -423,7 +435,7 @@ const RightPanel = () => {
             <div className={styles.buttonWrap}>
               <div role="button" className={styles.button} onClick={saveToDrive} disabled={contentState.saveDrive}>
                 <div className={styles.buttonLeft}>
-                  <ReactSVG src={URL + 'editor/icons/drive.svg'} />
+                  <ReactSVG src={URL + 'editor/icons/verto.svg'} />
                 </div>
                 <div className={styles.buttonMiddle}>
                   <div className={styles.buttonTitle}>
@@ -512,8 +524,10 @@ const RightPanel = () => {
                     <ReactSVG src={URL + 'editor/icons/download.svg'} />
                   </div>
                   <div className={styles.buttonMiddle}>
-                    <div className={styles.buttonTitle}>{contentState.downloadingWEBM ? chrome.i18n.getMessage('downloadingLabel') : 'Download transcription' }</div>
-                    <div className={styles.buttonDescription}>{!contentState.isFfmpegRunning ? 'Export transcription of audio as text (May take a few minutes..)' : 'Preparing transcript please wait...'}</div>
+                    <div className={styles.buttonTitle}>{contentState.downloadingWEBM ? chrome.i18n.getMessage('downloadingLabel') : 'Download transcription'}</div>
+                    <div className={styles.buttonDescription}>
+                      {!contentState.isFfmpegRunning ? 'Export transcription of audio as text (May take a few minutes..)' : 'Preparing transcript please wait...'}
+                    </div>
                   </div>
                   <div className={styles.buttonRight}>
                     <ReactSVG src={URL + 'editor/icons/right-arrow.svg'} />
