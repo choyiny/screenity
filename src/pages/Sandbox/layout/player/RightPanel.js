@@ -55,11 +55,15 @@ const RightPanel = () => {
           })
           .then((response) => {
             if (response.status === 'ew') {
+              alert('Error uploading to Verto Drive');
               // Cancel saving to drive
               setContentState((prevContentState) => ({
                 ...prevContentState,
                 saveDrive: false,
               }));
+            }else{
+              alert('Uploaded to Verto Drive');
+              console.log('response', response);
             }
           });
       } else {
@@ -77,12 +81,14 @@ const RightPanel = () => {
             })
             .then((response) => {
               if (response.status === 'ew') {
+                alert('Error uploading to Verto Drive');
                 // Cancel saving to drive
                 setContentState((prevContentState) => ({
                   ...prevContentState,
                   saveDrive: false,
                 }));
               }else{
+                alert('Uploaded to Verto Drive');
                 console.log('response', response);
               }
             });
